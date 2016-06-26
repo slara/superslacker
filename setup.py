@@ -38,7 +38,7 @@ except (IOError, OSError):
     CHANGES = ''
 
 setup(name='superslacker',
-      version='0.0.2',
+      version='0.1.0',
       license='BSD-derived (http://www.repoze.org/LICENSE.txt)',
       description='superslacker plugin for supervisord',
       long_description=README + '\n\n' + CHANGES,
@@ -82,6 +82,7 @@ setup(name='superslacker',
       test_suite='superslacker.tests',
       entry_points="""\
       [console_scripts]
-      fatalslack = superslacker.fatalslack:main
+      fatalslack = superslacker.superslacker:fatalslack
+      superslacker = superslacker.superslacker:main
       """
       )

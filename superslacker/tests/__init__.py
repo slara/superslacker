@@ -1,1 +1,1 @@
-# superlance package
+# superslacker package

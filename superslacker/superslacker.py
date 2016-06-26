@@ -22,12 +22,12 @@
 # A supervisor config snippet that tells supervisor to use this script
 # as a listener is below.
 #
-# [eventlistener:fatalslack]
-# command=python fatalslack
+# [eventlistener:superslacker]
+# command=python superslacker
 # events=PROCESS_STATE,TICK_60
 
 doc = """\
-fatalslack.py [--token=<Slack API Token>]
+superslacker.py [--token=<Slack API Token>]
         [--channel=<slack channel>]
 
 Options:
@@ -38,7 +38,7 @@ Options:
 
 A sample invocation:
 
-fatalslack.py --token="your-slack-api-token" --channel="#notifications"
+superslacker.py --token="your-slack-api-token" --channel="#notifications"
 
 """
 import os
@@ -50,7 +50,7 @@ from superlance.process_state_email_monitor import ProcessStateMonitor
 from slacker import Slacker
 
 
-class FatalSlack(ProcessStateMonitor):
+class SuperSlacker(ProcessStateMonitor):
 
     process_state_events = ['PROCESS_STATE_FATAL']
 
@@ -137,8 +137,14 @@ class FatalSlack(ProcessStateMonitor):
 
 
 def main():
-    fatal = FatalSlack.create_from_cmd_line()
-    fatal.run()
+    superslacker = SuperSlacker.create_from_cmd_line()
+    superslacker.run()
+
+def fatalslack():
+    superslacker = SuperSlacker.create_from_cmd_line()
+    superslacker.write_stderr('fatalslack is deprecated. Please use superslack instead\n')
+    superslacker.run()
+
 
 if __name__ == '__main__':
     main()
