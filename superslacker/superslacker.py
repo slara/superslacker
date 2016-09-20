@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 # Copyright (c) 2007 Agendaless Consulting and Contributors.
@@ -26,28 +27,30 @@
 # command=python superslacker
 # events=PROCESS_STATE,TICK_60
 
-doc = """\
-superslacker.py [--token=<Slack API Token>]
-        [--channel=<slack channel>]
+"""
+Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-m message]
 
 Options:
-
---token - User Slack Web API Token
-
---channel - the channel to send messages
-
-A sample invocation:
-
-superslacker.py --token="your-slack-api-token" --channel="#notifications"
-
+  -h, --help            show this help message and exit
+  -t TOKEN, --token=TOKEN
+                        Slack Token
+  -c CHANNEL, --channel=CHANNEL
+                        Slack Channel
+  -w WEBHOOK, --webhook=WEBHOOK
+                        Slack WebHook URL
+  -m MESSAGE, --message=MESSAGE
+                        Slack Message
+  -n HOSTNAME, --hostname=HOSTNAME
+                        System Hostname
 """
+
+import copy
 import os
 import sys
-import copy
 
+from slacker import Slacker, IncomingWebhook
+from superlance.process_state_monitor import ProcessStateMonitor
 from supervisor import childutils
-from superlance.process_state_email_monitor import ProcessStateMonitor
-from slacker import Slacker
 
 
 class SuperSlacker(ProcessStateMonitor):
@@ -59,14 +62,12 @@ class SuperSlacker(ProcessStateMonitor):
         from optparse import OptionParser
 
         parser = OptionParser()
-        parser.add_option("-t", "--token", dest="token", default="",
-                          help="Slack Token")
+        parser.add_option("-t", "--token", help="Slack Token")
+        parser.add_option("-c", "--channel", help="Slack Channel")
+        parser.add_option("-w", "--webhook", help="Slack WebHook URL")
+        parser.add_option("-m", "--message", help="Slack Message")
+        parser.add_option("-n", "--hostname", help="System Hostname")
 
-        parser.add_option("-c", "--channel", dest="channel", default="",
-                          help="Slack Channel")
-
-        parser.add_option("-n", "--hostname", dest="hostname", default="",
-                          help="System Hostname")
         return parser
 
     @classmethod
@@ -78,7 +79,10 @@ class SuperSlacker(ProcessStateMonitor):
     @classmethod
     def validate_cmd_line_options(cls, options):
         parser = cls._get_opt_parser()
-        if not options.token:
+        if not options.token and not options.webhook:
+            parser.print_help()
+            sys.exit(1)
+        if options.token and options.webhook:
             parser.print_help()
             sys.exit(1)
         if not options.channel:
@@ -107,10 +111,12 @@ class SuperSlacker(ProcessStateMonitor):
 
     def __init__(self, **kwargs):
         ProcessStateMonitor.__init__(self, **kwargs)
-        self.token = kwargs['token']
         self.channel = kwargs['channel']
+        self.token = kwargs.get('token', None)
         self.now = kwargs.get('now', None)
         self.hostname = kwargs.get('hostname', None)
+        self.webhook = kwargs.get('webhook', None)
+        self.message = kwargs.get('message', None)
 
     def get_process_state_change_msg(self, headers, payload):
         pheaders, pdata = childutils.eventdata(payload + '\n')
@@ -131,14 +137,26 @@ class SuperSlacker(ProcessStateMonitor):
         }
 
     def send_message(self, message):
-        slack = Slacker(message['token'])
-        for msg in message['messages']:
-            slack.chat.post_message(message['channel'], msg)
+        if self.webhook:
+            webhook = IncomingWebhook(url=self.webhook)
+            for msg in message['messages']:
+                webhook.post(data={
+                    "channel": self.channel,
+                    "text": msg,
+                    "attachments": [{"text": self.message, "color": "ff0000"}],
+                    "username": "superslacker",
+                    "icon_emoji": ":sos:",
+                    "link_names": 1})
+        if self.token:
+            slack = Slacker(token=message['token'])
+            for msg in message['messages']:
+                slack.chat.post_message(message['channel'], msg)
 
 
 def main():
     superslacker = SuperSlacker.create_from_cmd_line()
     superslacker.run()
+
 
 def fatalslack():
     superslacker = SuperSlacker.create_from_cmd_line()
