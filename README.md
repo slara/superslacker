@@ -13,14 +13,14 @@ pip install superslacker
 ## Command-Line Syntax
 
 ```bash
-$ superslacker [-t token] [-c channel] [-n hostname]
+$ superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-m message]
 ```
 
 ### Options
 
 ```-t TOKEN, --token=TOKEN```
 
-`superslacker` uses Slack Web API to post messages to Slack. In order to be able to send messages to Slack, you need to generate your `token` by registering your application. More info can be found [here](https://api.slack.com/web)
+Post a message to Slack using Slack Web API. In order to be able to send messages to Slack, you need to generate your `token` by registering your application. More info can be found [here](https://api.slack.com/web)
 
 ```-c CHANNEL, --channel=CHANNEL```
 
@@ -29,6 +29,14 @@ $ superslacker [-t token] [-c channel] [-n hostname]
 ```-n HOSTNAME, --hostname=HOSTNAME```
 
 Name or identificator of the machine where the events are been generated. This goes in the event message.
+
+```-w WEBHOOK, --webhook=WEBHOOK```
+
+Post a message to Slack using Slack Incoming WebHook. In order to be able to send messages to Slack, you need to add Incoming WebHook to your Slack account. More info can be found [here](https://api.slack.com/incoming-webhooks)
+
+```-m MESSAGE, --message=MESSAGE```
+
+Add a message in an attachment. Message will include red color border along the left side, :ghost: as an icon and `superslacker` username. 
 
 
 ## Configuration
