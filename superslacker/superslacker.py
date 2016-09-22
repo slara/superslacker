@@ -28,7 +28,7 @@
 # events=PROCESS_STATE,TICK_60
 
 """
-Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-m message]
+Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment]
 
 Options:
   -h, --help            show this help message and exit
@@ -38,8 +38,8 @@ Options:
                         Slack Channel
   -w WEBHOOK, --webhook=WEBHOOK
                         Slack WebHook URL
-  -m MESSAGE, --message=MESSAGE
-                        Slack Message
+  -a ATTACHMENT, --attachment=ATTACHMENT
+                        Slack Attachment text
   -n HOSTNAME, --hostname=HOSTNAME
                         System Hostname
 """
@@ -64,7 +64,7 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option("-t", "--token", help="Slack Token")
         parser.add_option("-c", "--channel", help="Slack Channel")
         parser.add_option("-w", "--webhook", help="Slack WebHook URL")
-        parser.add_option("-m", "--message", help="Slack Message")
+        parser.add_option("-a", "--attachment", help="Slack Attachment text")
         parser.add_option("-n", "--hostname", help="System Hostname")
 
         return parser
@@ -115,7 +115,7 @@ class SuperSlacker(ProcessStateMonitor):
         self.now = kwargs.get('now', None)
         self.hostname = kwargs.get('hostname', None)
         self.webhook = kwargs.get('webhook', None)
-        self.message = kwargs.get('message', None)
+        self.attachment = kwargs.get('attachment', None)
 
     def get_process_state_change_msg(self, headers, payload):
         pheaders, pdata = childutils.eventdata(payload + '\n')
@@ -133,7 +133,7 @@ class SuperSlacker(ProcessStateMonitor):
             'token': self.token,
             'webhook': self.webhook,
             'channel': self.channel,
-            'message': self.message,
+            'attachment': self.attachment,
             'messages': self.batchmsgs
         }
 
@@ -145,7 +145,7 @@ class SuperSlacker(ProcessStateMonitor):
                 'username': 'superslacker',
                 'icon_emoji': ':sos:',
                 'link_names': 1,
-                'attachments': [{"text": message['message'], "color": "danger"}]
+                'attachments': [{"text": message['attachment'], "color": "danger"}]
             }
             if message['webhook']:
                 webhook = IncomingWebhook(url=message['webhook'])
