@@ -54,7 +54,6 @@ from supervisor import childutils
 
 
 class SuperSlacker(ProcessStateMonitor):
-
     process_state_events = ['PROCESS_STATE_FATAL']
 
     @classmethod
@@ -132,25 +131,28 @@ class SuperSlacker(ProcessStateMonitor):
     def get_batch_message(self):
         return {
             'token': self.token,
+            'webhook': self.webhook,
             'channel': self.channel,
+            'message': self.message,
             'messages': self.batchmsgs
         }
 
     def send_message(self, message):
-        if self.webhook:
-            webhook = IncomingWebhook(url=self.webhook)
-            for msg in message['messages']:
-                webhook.post(data={
-                    "channel": self.channel,
-                    "text": msg,
-                    "attachments": [{"text": self.message, "color": "ff0000"}],
-                    "username": "superslacker",
-                    "icon_emoji": ":sos:",
-                    "link_names": 1})
-        if self.token:
-            slack = Slacker(token=message['token'])
-            for msg in message['messages']:
-                slack.chat.post_message(message['channel'], msg)
+        for msg in message['messages']:
+            payload = {
+                'channel': message['channel'],
+                'text': msg,
+                'username': 'superslacker',
+                'icon_emoji': ':sos:',
+                'link_names': 1,
+                'attachments': [{"text": message['message'], "color": "danger"}]
+            }
+            if message['webhook']:
+                webhook = IncomingWebhook(url=message['webhook'])
+                webhook.post(data=payload)
+            if message['token']:
+                slack = Slacker(token=message['token'])
+                slack.chat.post_message(**payload)
 
 
 def main():
