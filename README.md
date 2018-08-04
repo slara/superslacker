@@ -13,7 +13,7 @@ pip install superslacker
 ## Command-Line Syntax
 
 ```bash
-$ superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment]
+$ superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events]
 ```
 
 ### Options
@@ -38,6 +38,10 @@ Post a message to Slack using Slack Incoming WebHook. In order to be able to sen
 
 Add text attachment to message. Attachment will have red color border along the left side.
 
+```-e EVENTS, --event=EVENTS```
+
+The Supervisor Process State event(s) to listen for. It can be any, one of, or all of
+STARTING, RUNNING, BACKOFF, STOPPING, EXITED, STOPPED, UNKNOWN.
 
 ## Notes
 
