@@ -56,7 +56,7 @@ The following example assume that `superslacker` is on your system `PATH`.
 
 ```
 [eventlistener:superslacker]
-command=superslacker --token="slacktoken-slacktoken-slacktoken" --channel="#notifications" --hostname="HOST"
+command=superslacker --token="slacktoken-slacktoken-slacktoken" --channel="#notifications" --hostname="HOST" --events="UNKNOWN,STOPPING"
 events=PROCESS_STATE,TICK_60
 ```
 
