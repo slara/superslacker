@@ -28,7 +28,7 @@
 # events=PROCESS_STATE,TICK_60
 
 """
-Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment]
+Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events]
 
 Options:
   -h, --help            show this help message and exit
@@ -42,6 +42,8 @@ Options:
                         Slack Attachment text
   -n HOSTNAME, --hostname=HOSTNAME
                         System Hostname
+  -e EVENTS, --events=EVENTS
+                        Supervisor process state event(s)
 """
 
 import copy
@@ -66,6 +68,7 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option("-w", "--webhook", help="Slack WebHook URL")
         parser.add_option("-a", "--attachment", help="Slack Attachment text")
         parser.add_option("-n", "--hostname", help="System Hostname")
+        parser.add_option("-e", "--events", help="Supervisor event(s). Can be any, some or all of STARTING, RUNNING, BACKOFF, STOPPING, EXITED, STOPPED, UNKNOWN as comma separated values")
 
         return parser
 
@@ -116,6 +119,28 @@ class SuperSlacker(ProcessStateMonitor):
         self.hostname = kwargs.get('hostname', None)
         self.webhook = kwargs.get('webhook', None)
         self.attachment = kwargs.get('attachment', None)
+        events = kwargs.get('events', None)
+        self.get_events(events)
+
+    
+    def get_events(self, events):
+        """[summary]
+
+        Arguments:
+            events {str} -- Comma separated event(s) passed as args
+
+        Adds the events to the process_state_events to be monitored.
+        """
+
+        process_states = ["STARTING", "RUNNING", "BACKOFF", "STOPPING", "EXITED", "STOPPED", "UNKNOWN"]
+        if events is None:
+            return list()
+        my_events = events.split(",")
+        for event in my_events:
+            event = event.strip().upper()
+            if event in process_states:
+                self.process_state_events.append('%s_%s' % ('PROCESS_STATE', event))
+
 
     def get_process_state_change_msg(self, headers, payload):
         pheaders, pdata = childutils.eventdata(payload + '\n')
