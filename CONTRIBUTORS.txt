@@ -18,3 +18,5 @@ Contributors
 - Sebastian Lara, 2015-10-30
 
 - Roman Zhuzha, 2016-22-09
+
+- Ifiok Idiang, 2018-08-26
