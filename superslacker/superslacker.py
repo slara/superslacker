@@ -28,7 +28,7 @@
 # events=PROCESS_STATE,TICK_60
 
 """
-Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events]
+Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-e events]
 
 Options:
   -h, --help            show this help message and exit
@@ -38,8 +38,6 @@ Options:
                         Slack Channel
   -w WEBHOOK, --webhook=WEBHOOK
                         Slack WebHook URL
-  -a ATTACHMENT, --attachment=ATTACHMENT
-                        Slack Attachment text
   -n HOSTNAME, --hostname=HOSTNAME
                         System Hostname
   -e EVENTS, --events=EVENTS
@@ -80,7 +78,6 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option("-t", "--token", help="Slack Token")
         parser.add_option("-c", "--channel", help="Slack Channel")
         parser.add_option("-w", "--webhook", help="Slack WebHook URL")
-        parser.add_option("-a", "--attachment", help="Slack Attachment text")
         parser.add_option("-n", "--hostname", help="System Hostname")
         parser.add_option("-e", "--events", help="Supervisor event(s). Can be any, some or all of {} as comma separated values".format(cls.SUPERVISOR_EVENTS))
 
@@ -132,7 +129,6 @@ class SuperSlacker(ProcessStateMonitor):
         self.now = kwargs.get('now', None)
         self.hostname = kwargs.get('hostname', None)
         self.webhook = kwargs.get('webhook', None)
-        self.attachment = kwargs.get('attachment', None)
         self.process_state_events = [
             'PROCESS_STATE_{}'.format(e.strip().upper())
             for e in kwargs.get('events', None).split(",")

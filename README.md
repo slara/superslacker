@@ -34,10 +34,6 @@ Name or identificator of the machine where the events are been generated. This g
 
 Post a message to Slack using Slack Incoming WebHook. In order to be able to send messages to Slack, you need to configure an `Incoming WebHook` for your Slack account. More info can be found [here](https://api.slack.com/incoming-webhooks)
 
-```-a ATTACHMENT, --attachment=ATTACHMENT```
-
-Add text attachment to message. Attachment will have red color border along the left side.
-
 ```-e EVENTS, --event=EVENTS```
 
 The Supervisor Process State event(s) to listen for. It can be any, one of, or all of
