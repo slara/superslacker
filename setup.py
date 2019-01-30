@@ -37,6 +37,11 @@ try:
 except (IOError, OSError):
     CHANGES = ''
 
+
+tests_require = [
+    'mock',
+]
+
 setup(name='superslacker',
       version='0.3',
       license='BSD-derived (http://www.repoze.org/LICENSE.txt)',
@@ -73,16 +78,12 @@ setup(name='superslacker',
           'supervisor',
           'slacker'
       ],
-      tests_require=[
-          'supervisor',
-          'superlance',
-          'slacker',
-          'mock'
-      ],
+      tests_require=tests_require,
       test_suite='superslacker.tests',
       entry_points="""\
       [console_scripts]
       fatalslack = superslacker.superslacker:fatalslack
       superslacker = superslacker.superslacker:main
-      """
-      )
+      """,
+      extras_require={'tests': tests_require}
+)
