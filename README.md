@@ -43,6 +43,14 @@ Add text attachment to message. Attachment will have red color border along the 
 The Supervisor Process State event(s) to listen for. It can be any, one of, or all of
 STARTING, RUNNING, BACKOFF, STOPPING, EXITED, STOPPED, UNKNOWN.
 
+```-i ICON_EMOJI, --icon=ICON_EMOJI```
+
+To customize the Slackmoji to be used as icon. Defaults to `:sos:`.
+
+```-u USERNAME, --username=USERNAME```
+
+To customize the Slack username. Defaults to `superslacker`.
+
 ## Notes
 
 :ghost: gonna be used as an icon for the message and `superslacker` as a username. 

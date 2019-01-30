@@ -40,6 +40,10 @@ Options:
                         Slack WebHook URL
   -a ATTACHMENT, --attachment=ATTACHMENT
                         Slack Attachment text
+  -i ICON_EMOJI, --icon=ICON_EMOJI
+                        Slack emoji to be used as icon
+  -u USERNAME, --username=USERNAME
+                        Slack username
   -n HOSTNAME, --hostname=HOSTNAME
                         System Hostname
   -e EVENTS, --events=EVENTS
@@ -67,6 +71,8 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option("-c", "--channel", help="Slack Channel")
         parser.add_option("-w", "--webhook", help="Slack WebHook URL")
         parser.add_option("-a", "--attachment", help="Slack Attachment text")
+        parser.add_option("-i", "--icon", default=':sos:', help="Slack emoji to be used as icon")
+        parser.add_option("-u", "--username", default='superslacker', help="Slack username")
         parser.add_option("-n", "--hostname", help="System Hostname")
         parser.add_option("-e", "--events", help="Supervisor event(s). Can be any, some or all of STARTING, RUNNING, BACKOFF, STOPPING, EXITED, STOPPED, UNKNOWN as comma separated values")
 
@@ -119,6 +125,8 @@ class SuperSlacker(ProcessStateMonitor):
         self.hostname = kwargs.get('hostname', None)
         self.webhook = kwargs.get('webhook', None)
         self.attachment = kwargs.get('attachment', None)
+        self.icon = kwargs.get('icon')
+        self.username = kwargs.get('username')
         events = kwargs.get('events', None)
         self.get_events(events)
 
@@ -167,8 +175,8 @@ class SuperSlacker(ProcessStateMonitor):
             payload = {
                 'channel': message['channel'],
                 'text': msg,
-                'username': 'superslacker',
-                'icon_emoji': ':sos:',
+                'username': self.username,
+                'icon_emoji': self.icon,
                 'link_names': 1,
                 'attachments': [{"text": message['attachment'], "color": "danger"}]
             }
