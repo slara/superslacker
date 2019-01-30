@@ -61,6 +61,17 @@ class SuperSlacker(ProcessStateMonitor):
         'FATAL', 'EXITED', 'STOPPED', 'UNKNOWN',
     )
 
+    EVENTS_SLACK_COLORS = {
+        "PROCESS_STATE_STOPPED": 'danger',
+        "PROCESS_STATE_STARTING": 'warning',
+        "PROCESS_STATE_RUNNING": 'good',
+        "PROCESS_STATE_BACKOFF": 'danger',
+        "PROCESS_STATE_STOPPING": 'danger',
+        "PROCESS_STATE_EXITED": 'danger',
+        "PROCESS_STATE_FATAL": 'danger',
+        "PROCESS_STATE_UNKNOWN": 'danger',
+    }
+
     @classmethod
     def _get_opt_parser(cls):
         from optparse import OptionParser
@@ -130,19 +141,46 @@ class SuperSlacker(ProcessStateMonitor):
 
     def get_process_state_change_msg(self, headers, payload):
         pheaders, pdata = childutils.eventdata(payload + '\n')
-        txt = ("[{0}] Process {groupname}:{processname} "
-               "failed to start too many times".format(self.hostname, **pheaders))
-        return txt
+        return "{hostname};{groupname}:{processname};{from_state};{event}".format(
+            hostname=self.hostname, event=headers['eventname'], **pheaders
+        )
 
     def send_batch_notification(self):
         for msg in self.batchmsgs:
+            hostname, processname, from_state, eventname = msg.rsplit(';')
             payload = {
                 'channel': self.channel,
-                'text': msg,
                 'username': 'superslacker',
                 'icon_emoji': ':sos:',
-                'link_names': 1,
-                'attachments': [{"text": self.attachment, "color": "danger"}]
+                'attachments': [
+                    {
+                        'fallback': msg,
+                        "color": self.EVENTS_SLACK_COLORS[eventname],
+                        "pretext": "Supervisor event",
+                        'fields': [
+                            {
+                                "title": "Hostname",
+                                "value": hostname,
+                                "short": True,
+                            },
+                            {
+                                "title": "Process",
+                                "value": processname,
+                                "short": True,
+                            },
+                            {
+                                "title": "From state",
+                                "value": from_state,
+                                "short": True,
+                            },
+                            {
+                                "title": "Event",
+                                "value": eventname,
+                                "short": True,
+                            },
+                        ]
+                    }
+                ]
             }
             if self.webhook:
                 webhook = IncomingWebhook(url=self.webhook)
