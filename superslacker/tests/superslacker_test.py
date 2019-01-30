@@ -5,7 +5,7 @@ import mock
 class SuperSlackerTests(unittest.TestCase):
     token = 'testtokentesttokentesttoken'
     channel = ('#testchannel')
-    unexpected_err_msg = 'Process bar:foo failed to start too many times'
+    unexpected_err_msg = 'Process bar:foo, which was in state BACKOFF, got event PROCESS_STATE_FATAL'
 
     def _get_target_class(self):
         from superslacker.superslacker import SuperSlacker

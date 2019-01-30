@@ -144,9 +144,11 @@ class SuperSlacker(ProcessStateMonitor):
 
     def get_process_state_change_msg(self, headers, payload):
         pheaders, pdata = childutils.eventdata(payload + '\n')
-        txt = ("[{0}] Process {groupname}:{processname} "
-               "failed to start too many times".format(self.hostname, **pheaders))
-        return txt
+        return (
+            "[{0}] Process {groupname}:{processname}, which was in state {from_state}, got event {event}".format(
+                self.hostname, event=headers['eventname'], **pheaders
+            )
+        )
 
     def send_batch_notification(self):
         message = self.get_batch_message()
