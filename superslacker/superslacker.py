@@ -135,34 +135,20 @@ class SuperSlacker(ProcessStateMonitor):
         return txt
 
     def send_batch_notification(self):
-        message = self.get_batch_message()
-        if message:
-            self.send_message(message)
-
-    def get_batch_message(self):
-        return {
-            'token': self.token,
-            'webhook': self.webhook,
-            'channel': self.channel,
-            'attachment': self.attachment,
-            'messages': self.batchmsgs
-        }
-
-    def send_message(self, message):
-        for msg in message['messages']:
+        for msg in self.batchmsgs:
             payload = {
-                'channel': message['channel'],
+                'channel': self.channel,
                 'text': msg,
                 'username': 'superslacker',
                 'icon_emoji': ':sos:',
                 'link_names': 1,
-                'attachments': [{"text": message['attachment'], "color": "danger"}]
+                'attachments': [{"text": self.attachment, "color": "danger"}]
             }
-            if message['webhook']:
-                webhook = IncomingWebhook(url=message['webhook'])
+            if self.webhook:
+                webhook = IncomingWebhook(url=self.webhook)
                 webhook.post(data=payload)
-            if message['token']:
-                slack = Slacker(token=message['token'])
+            elif self.token:
+                slack = Slacker(token=self.token)
                 slack.chat.post_message(**payload)
 
 
