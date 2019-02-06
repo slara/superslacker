@@ -6,6 +6,7 @@ class SuperSlackerTests(unittest.TestCase):
     token = 'testtokentesttokentesttoken'
     channel = ('#testchannel')
     unexpected_err_msg = 'Process bar:foo failed to start too many times'
+    events = 'FATAL,EXITED'
 
     def _get_target_class(self):
         from superslacker.superslacker import SuperSlacker
@@ -14,6 +15,7 @@ class SuperSlackerTests(unittest.TestCase):
     def _make_one_mocked(self, **kwargs):
         kwargs['token'] = kwargs.get('token', self.token)
         kwargs['channel'] = kwargs.get('channel', self.channel)
+        kwargs['events'] = kwargs.get('events', self.events)
 
         obj = self._get_target_class()(**kwargs)
         obj.send_message = mock.Mock()

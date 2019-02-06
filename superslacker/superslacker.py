@@ -56,7 +56,10 @@ from supervisor import childutils
 
 
 class SuperSlacker(ProcessStateMonitor):
-    process_state_events = ['PROCESS_STATE_FATAL']
+    SUPERVISOR_EVENTS = (
+        'STARTING', 'RUNNING', 'BACKOFF', 'STOPPING',
+        'FATAL', 'EXITED', 'STOPPED', 'UNKNOWN',
+    )
 
     @classmethod
     def _get_opt_parser(cls):
@@ -68,7 +71,7 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option("-w", "--webhook", help="Slack WebHook URL")
         parser.add_option("-a", "--attachment", help="Slack Attachment text")
         parser.add_option("-n", "--hostname", help="System Hostname")
-        parser.add_option("-e", "--events", help="Supervisor event(s). Can be any, some or all of STARTING, RUNNING, BACKOFF, STOPPING, EXITED, STOPPED, UNKNOWN as comma separated values")
+        parser.add_option("-e", "--events", help="Supervisor event(s). Can be any, some or all of {} as comma separated values".format(cls.SUPERVISOR_EVENTS))
 
         return parser
 
@@ -119,28 +122,11 @@ class SuperSlacker(ProcessStateMonitor):
         self.hostname = kwargs.get('hostname', None)
         self.webhook = kwargs.get('webhook', None)
         self.attachment = kwargs.get('attachment', None)
-        events = kwargs.get('events', None)
-        self.get_events(events)
-
-    
-    def get_events(self, events):
-        """[summary]
-
-        Arguments:
-            events {str} -- Comma separated event(s) passed as args
-
-        Adds the events to the process_state_events to be monitored.
-        """
-
-        process_states = ["STARTING", "RUNNING", "BACKOFF", "STOPPING", "EXITED", "STOPPED", "UNKNOWN"]
-        if events is None:
-            return list()
-        my_events = events.split(",")
-        for event in my_events:
-            event = event.strip().upper()
-            if event in process_states:
-                self.process_state_events.append('%s_%s' % ('PROCESS_STATE', event))
-
+        self.process_state_events = [
+            'PROCESS_STATE_{}'.format(e.strip().upper())
+            for e in kwargs.get('events', None).split(",")
+            if e in self.SUPERVISOR_EVENTS
+        ]
 
     def get_process_state_change_msg(self, headers, payload):
         pheaders, pdata = childutils.eventdata(payload + '\n')
