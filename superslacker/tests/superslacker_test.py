@@ -5,7 +5,9 @@ import mock
 class SuperSlackerTests(unittest.TestCase):
     token = 'testtokentesttokentesttoken'
     channel = ('#testchannel')
-    unexpected_err_msg = 'Process bar:foo failed to start too many times'
+    unexpected_err_msg = 'server;bar:foo;BACKOFF;PROCESS_STATE_FATAL'
+    events = 'FATAL,EXITED'
+    hostname = 'server'
 
     def _get_target_class(self):
         from superslacker.superslacker import SuperSlacker
@@ -14,6 +16,8 @@ class SuperSlackerTests(unittest.TestCase):
     def _make_one_mocked(self, **kwargs):
         kwargs['token'] = kwargs.get('token', self.token)
         kwargs['channel'] = kwargs.get('channel', self.channel)
+        kwargs['events'] = kwargs.get('events', self.events)
+        kwargs['hostname'] = kwargs.get('hostname', self.hostname)
 
         obj = self._get_target_class()(**kwargs)
         obj.send_message = mock.Mock()
@@ -32,7 +36,7 @@ class SuperSlackerTests(unittest.TestCase):
         crash = self._make_one_mocked()
         hdrs, payload = self.get_process_fatal_event('foo', 'bar')
         msg = crash.get_process_state_change_msg(hdrs, payload)
-        self.assertTrue(self.unexpected_err_msg in msg)
+        self.assertEquals(self.unexpected_err_msg, msg)
 
 if __name__ == '__main__':
     unittest.main()

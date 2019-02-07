@@ -28,7 +28,7 @@
 # events=PROCESS_STATE,TICK_60
 
 """
-Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events]
+Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-e events]
 
 Options:
   -h, --help            show this help message and exit
@@ -38,8 +38,6 @@ Options:
                         Slack Channel
   -w WEBHOOK, --webhook=WEBHOOK
                         Slack WebHook URL
-  -a ATTACHMENT, --attachment=ATTACHMENT
-                        Slack Attachment text
   -i ICON_EMOJI, --icon=ICON_EMOJI
                         Slack emoji to be used as icon
   -u USERNAME, --username=USERNAME
@@ -60,7 +58,21 @@ from supervisor import childutils
 
 
 class SuperSlacker(ProcessStateMonitor):
-    process_state_events = ['PROCESS_STATE_FATAL']
+    SUPERVISOR_EVENTS = (
+        'STARTING', 'RUNNING', 'BACKOFF', 'STOPPING',
+        'FATAL', 'EXITED', 'STOPPED', 'UNKNOWN',
+    )
+
+    EVENTS_SLACK_COLORS = {
+        "PROCESS_STATE_STOPPED": 'danger',
+        "PROCESS_STATE_STARTING": 'warning',
+        "PROCESS_STATE_RUNNING": 'good',
+        "PROCESS_STATE_BACKOFF": 'danger',
+        "PROCESS_STATE_STOPPING": 'danger',
+        "PROCESS_STATE_EXITED": 'danger',
+        "PROCESS_STATE_FATAL": 'danger',
+        "PROCESS_STATE_UNKNOWN": 'danger',
+    }
 
     @classmethod
     def _get_opt_parser(cls):
@@ -70,11 +82,10 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option("-t", "--token", help="Slack Token")
         parser.add_option("-c", "--channel", help="Slack Channel")
         parser.add_option("-w", "--webhook", help="Slack WebHook URL")
-        parser.add_option("-a", "--attachment", help="Slack Attachment text")
         parser.add_option("-i", "--icon", default=':sos:', help="Slack emoji to be used as icon")
         parser.add_option("-u", "--username", default='superslacker', help="Slack username")
         parser.add_option("-n", "--hostname", help="System Hostname")
-        parser.add_option("-e", "--events", help="Supervisor event(s). Can be any, some or all of STARTING, RUNNING, BACKOFF, STOPPING, EXITED, STOPPED, UNKNOWN as comma separated values")
+        parser.add_option("-e", "--events", help="Supervisor event(s). Can be any, some or all of {} as comma separated values".format(cls.SUPERVISOR_EVENTS))
 
         return parser
 
@@ -124,67 +135,63 @@ class SuperSlacker(ProcessStateMonitor):
         self.now = kwargs.get('now', None)
         self.hostname = kwargs.get('hostname', None)
         self.webhook = kwargs.get('webhook', None)
-        self.attachment = kwargs.get('attachment', None)
         self.icon = kwargs.get('icon')
         self.username = kwargs.get('username')
         events = kwargs.get('events', None)
-        self.get_events(events)
-
-    
-    def get_events(self, events):
-        """[summary]
-
-        Arguments:
-            events {str} -- Comma separated event(s) passed as args
-
-        Adds the events to the process_state_events to be monitored.
-        """
-
-        process_states = ["STARTING", "RUNNING", "BACKOFF", "STOPPING", "EXITED", "STOPPED", "UNKNOWN"]
-        if events is None:
-            return list()
-        my_events = events.split(",")
-        for event in my_events:
-            event = event.strip().upper()
-            if event in process_states:
-                self.process_state_events.append('%s_%s' % ('PROCESS_STATE', event))
-
+        self.process_state_events = [
+            'PROCESS_STATE_{}'.format(e.strip().upper())
+            for e in kwargs.get('events', None).split(",")
+            if e in self.SUPERVISOR_EVENTS
+        ]
 
     def get_process_state_change_msg(self, headers, payload):
         pheaders, pdata = childutils.eventdata(payload + '\n')
-        txt = ("[{0}] Process {groupname}:{processname} "
-               "failed to start too many times".format(self.hostname, **pheaders))
-        return txt
+        return "{hostname};{groupname}:{processname};{from_state};{event}".format(
+            hostname=self.hostname, event=headers['eventname'], **pheaders
+        )
 
     def send_batch_notification(self):
-        message = self.get_batch_message()
-        if message:
-            self.send_message(message)
-
-    def get_batch_message(self):
-        return {
-            'token': self.token,
-            'webhook': self.webhook,
-            'channel': self.channel,
-            'attachment': self.attachment,
-            'messages': self.batchmsgs
-        }
-
-    def send_message(self, message):
-        for msg in message['messages']:
+        for msg in self.batchmsgs:
+            hostname, processname, from_state, eventname = msg.rsplit(';')
             payload = {
-                'channel': message['channel'],
-                'text': msg,
+                'channel': self.channel,
                 'username': self.username,
                 'icon_emoji': self.icon,
-                'link_names': 1,
-                'attachments': [{"text": message['attachment'], "color": "danger"}]
+                'attachments': [
+                    {
+                        'fallback': msg,
+                        "color": self.EVENTS_SLACK_COLORS[eventname],
+                        "pretext": "Supervisor event",
+                        'fields': [
+                            {
+                                "title": "Hostname",
+                                "value": hostname,
+                                "short": True,
+                            },
+                            {
+                                "title": "Process",
+                                "value": processname,
+                                "short": True,
+                            },
+                            {
+                                "title": "From state",
+                                "value": from_state,
+                                "short": True,
+                            },
+                            {
+                                "title": "Event",
+                                "value": eventname,
+                                "short": True,
+                            },
+                        ]
+                    }
+                ]
             }
-            if message['webhook']:
-                webhook = IncomingWebhook(url=message['webhook'])
+            if self.webhook:
+                webhook = IncomingWebhook(url=self.webhook)
                 webhook.post(data=payload)
-            if message['token']:
-                slack = Slacker(token=message['token'])
+            elif self.token:
+                slack = Slacker(token=self.token)
                 slack.chat.post_message(**payload)
 
 
