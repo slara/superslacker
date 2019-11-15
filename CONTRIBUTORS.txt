@@ -20,3 +20,5 @@ Contributors
 - Roman Zhuzha, 2016-22-09
 
 - Ifiok Idiang, 2018-08-26
+
+- David Guillot, 2019-01-30
