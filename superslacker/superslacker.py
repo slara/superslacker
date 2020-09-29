@@ -53,7 +53,6 @@ Options:
 import copy
 import os
 import sys
-import json
 
 from slack import WebClient, WebhookClient
 from superlance.process_state_monitor import ProcessStateMonitor
