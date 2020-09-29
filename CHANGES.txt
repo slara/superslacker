@@ -1,3 +1,8 @@
+0.5 (2020-09-29)
+----------------
+Added proxy support 
+Changed format of messages (compact)
+
 0.4 (2019-11-15)
 ----------------
 Customize Slack username and icon. (Thanks to David Guillot)

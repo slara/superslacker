@@ -22,3 +22,5 @@ Contributors
 - Ifiok Idiang, 2018-08-26
 
 - David Guillot, 2019-01-30
+
+- Aleksei Safonov 2020-09-29

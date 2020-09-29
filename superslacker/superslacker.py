@@ -28,7 +28,7 @@
 # events=PROCESS_STATE,TICK_60
 
 """
-Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-e events]
+Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-e events] [-p proxy]
 
 Options:
   -h, --help            show this help message and exit
@@ -44,6 +44,8 @@ Options:
                         Slack username
   -n HOSTNAME, --hostname=HOSTNAME
                         System Hostname
+  -p PROXY, --proxy=PROXY
+                        Proxy Server
   -e EVENTS, --events=EVENTS
                         Supervisor process state event(s)
 """
@@ -51,6 +53,7 @@ Options:
 import copy
 import os
 import sys
+import json
 
 from slacker import Slacker, IncomingWebhook
 from superlance.process_state_monitor import ProcessStateMonitor
@@ -64,14 +67,25 @@ class SuperSlacker(ProcessStateMonitor):
     )
 
     EVENTS_SLACK_COLORS = {
-        "PROCESS_STATE_STOPPED": 'danger',
-        "PROCESS_STATE_STARTING": 'warning',
-        "PROCESS_STATE_RUNNING": 'good',
-        "PROCESS_STATE_BACKOFF": 'danger',
-        "PROCESS_STATE_STOPPING": 'danger',
-        "PROCESS_STATE_EXITED": 'danger',
-        "PROCESS_STATE_FATAL": 'danger',
-        "PROCESS_STATE_UNKNOWN": 'danger',
+        "PROCESS_STATE_STOPPED": ':apple:',
+        "PROCESS_STATE_STARTING": ':warning:',
+        "PROCESS_STATE_RUNNING": ':green_apple:',
+        "PROCESS_STATE_BACKOFF": ':apple:',
+        "PROCESS_STATE_STOPPING": ':apple:',
+        "PROCESS_STATE_EXITED": ':apple:',
+        "PROCESS_STATE_FATAL": ':apple:',
+        "PROCESS_STATE_UNKNOWN": ':apple:',
+    }
+
+    EVENTS_SHORT_NAMES = {
+        "PROCESS_STATE_STOPPED": 'STOPPED',
+        "PROCESS_STATE_STARTING": 'STARTING',
+        "PROCESS_STATE_RUNNING": 'RUNNING',
+        "PROCESS_STATE_BACKOFF": 'BACKOFF',
+        "PROCESS_STATE_STOPPING": 'STOPPING',
+        "PROCESS_STATE_EXITED": 'EXITED',
+        "PROCESS_STATE_FATAL": 'FATAL',
+        "PROCESS_STATE_UNKNOWN": 'UNKNOWN',
     }
 
     @classmethod
@@ -85,6 +99,7 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option("-i", "--icon", default=':sos:', help="Slack emoji to be used as icon")
         parser.add_option("-u", "--username", default='superslacker', help="Slack username")
         parser.add_option("-n", "--hostname", help="System Hostname")
+        parser.add_option("-p", "--proxy", help="Proxy server")
         parser.add_option("-e", "--events", help="Supervisor event(s). Can be any, some or all of {} as comma separated values".format(cls.SUPERVISOR_EVENTS))
 
         return parser
@@ -135,6 +150,7 @@ class SuperSlacker(ProcessStateMonitor):
         self.now = kwargs.get('now', None)
         self.hostname = kwargs.get('hostname', None)
         self.webhook = kwargs.get('webhook', None)
+        self.proxy = json.loads(kwargs.get('proxy', None))
         self.icon = kwargs.get('icon')
         self.username = kwargs.get('username')
         events = kwargs.get('events', None)
@@ -157,38 +173,18 @@ class SuperSlacker(ProcessStateMonitor):
                 'channel': self.channel,
                 'username': self.username,
                 'icon_emoji': self.icon,
-                'attachments': [
+                'blocks': [
                     {
-                        'fallback': msg,
-                        "color": self.EVENTS_SLACK_COLORS[eventname],
-                        "pretext": "Supervisor event",
-                        'fields': [
-                            {
-                                "title": "Hostname",
-                                "value": hostname,
-                                "short": True,
-                            },
-                            {
-                                "title": "Process",
-                                "value": processname,
-                                "short": True,
-                            },
-                            {
-                                "title": "From state",
-                                "value": from_state,
-                                "short": True,
-                            },
-                            {
-                                "title": "Event",
-                                "value": eventname,
-                                "short": True,
-                            },
-                        ]
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": "{4} *{0}* @{1}: *{2}* from {3}".format(processname.split(":")[0],hostname,self.EVENTS_SHORT_NAMES[eventname],from_state, self.EVENTS_SLACK_COLORS[eventname])
+                        }
                     }
                 ]
             }
             if self.webhook:
-                webhook = IncomingWebhook(url=self.webhook)
+                webhook = IncomingWebhook(url=self.webhook,proxies=self.proxy)
                 webhook.post(data=payload)
             elif self.token:
                 slack = Slacker(token=self.token)
