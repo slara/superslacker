@@ -13,7 +13,7 @@ pip install superslacker
 ## Command-Line Syntax
 
 ```bash
-$ superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events] [-h proxy]
+$ superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events] [-p proxy]
 ```
 
 ### Options
@@ -38,6 +38,10 @@ Post a message to Slack using Slack Incoming WebHook. In order to be able to sen
 
 The Supervisor Process State event(s) to listen for. It can be any, one of, or all of
 STARTING, RUNNING, BACKOFF, STOPPING, EXITED, STOPPED, UNKNOWN.
+
+```-p PROXY, --proxy=PROXY```
+
+If you server with supervisord is behind proxy
 
 ```-i ICON_EMOJI, --icon=ICON_EMOJI```
 
