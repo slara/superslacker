@@ -55,7 +55,7 @@ import os
 import sys
 import json
 
-from slacker import Slacker, IncomingWebhook
+from slack import WebClient, WebhookClient
 from superlance.process_state_monitor import ProcessStateMonitor
 from supervisor import childutils
 
@@ -150,7 +150,7 @@ class SuperSlacker(ProcessStateMonitor):
         self.now = kwargs.get('now', None)
         self.hostname = kwargs.get('hostname', None)
         self.webhook = kwargs.get('webhook', None)
-        self.proxy = json.loads(kwargs.get('proxy', None))
+        self.proxy = kwargs.get('proxy', None)
         self.icon = kwargs.get('icon')
         self.username = kwargs.get('username')
         events = kwargs.get('events', None)
@@ -184,11 +184,11 @@ class SuperSlacker(ProcessStateMonitor):
                 ]
             }
             if self.webhook:
-                webhook = IncomingWebhook(url=self.webhook,proxies=self.proxy)
-                webhook.post(data=payload)
+                webhook = WebhookClient(url=self.webhook,proxy=self.proxy)
+                webhook.send_dict(body=payload)
             elif self.token:
-                slack = Slacker(token=self.token)
-                slack.chat.post_message(**payload)
+                slack = WebClient(token=self.token,proxy=self.proxy)
+                slack.chat_postMessage(**payload)
 
 
 def main():

@@ -70,13 +70,11 @@ setup(name='superslacker',
       zip_safe=False,
       install_requires=[
           'superlance',
-          'supervisor',
-          'slacker'
+          'slackclient'
       ],
       tests_require=[
-          'supervisor',
           'superlance',
-          'slacker',
+          'slackclient',
           'mock'
       ],
       test_suite='superslacker.tests',
