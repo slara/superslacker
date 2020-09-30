@@ -13,7 +13,7 @@ pip install superslacker
 ## Command-Line Syntax
 
 ```bash
-$ superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events] [-p proxy]
+$ superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events] [-p proxy] [--eventname eventname] [--interval interval]]
 ```
 
 ### Options
@@ -50,6 +50,16 @@ To customize the Slackmoji to be used as icon. Defaults to `:sos:`.
 ```-u USERNAME, --username=USERNAME```
 
 To customize the Slack username. Defaults to `superslacker`.
+
+```-eventname=EVENTNAME```
+
+How often to check changes. TICK_5 or TICK_60. Default TICK_60.
+
+```--interval=INTERVAL```
+
+How often to flush message queue. Default 60 sec.
+
+
 
 ## Notes
 

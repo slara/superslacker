@@ -105,8 +105,8 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option("-u", "--username", default='superslacker', help="Slack username")
         parser.add_option("-n", "--hostname", help="System Hostname")
         parser.add_option("-p", "--proxy", help="Proxy server")
-        parser.add_option("--eventname", help="TICK_5 or TICK_60. Default TICK_60")
-        parser.add_option("--interval", help="How often to check message queue. Default 60sec")
+        parser.add_option("--eventname", help="TICK_5 or TICK_60. Default TICK_60. How often to add messages into queue")
+        parser.add_option("--interval", help="How often to flush message queue. Default 60sec")
         parser.add_option("-e", "--events", help="Supervisor event(s). Can be any, some or all of {} as comma separated values".format(cls.SUPERVISOR_EVENTS))
 
         return parser
