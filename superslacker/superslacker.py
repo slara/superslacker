@@ -28,7 +28,7 @@
 # events=PROCESS_STATE,TICK_60
 
 """
-Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-e events] [-p proxy]
+Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-e events] [-p proxy] [--eventname TICK_x] [--interval interval]
 
 Options:
   -h, --help            show this help message and exit
@@ -46,6 +46,12 @@ Options:
                         System Hostname
   -p PROXY, --proxy=PROXY
                         Proxy Server
+  --proxy=eventname
+                        How often to check process states (TICK_5 or TICK_60). Default TICK_60
+
+  -interval=interval
+                        How often to flush message queue (in seconds). Default 60
+
   -e EVENTS, --events=EVENTS
                         Supervisor process state event(s)
 """
@@ -99,6 +105,8 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option("-u", "--username", default='superslacker', help="Slack username")
         parser.add_option("-n", "--hostname", help="System Hostname")
         parser.add_option("-p", "--proxy", help="Proxy server")
+        parser.add_option("--eventname", help="TICK_5 or TICK_60. Default TICK_60")
+        parser.add_option("--interval", help="How often to check message queue. Default 60sec")
         parser.add_option("-e", "--events", help="Supervisor event(s). Can be any, some or all of {} as comma separated values".format(cls.SUPERVISOR_EVENTS))
 
         return parser
@@ -152,6 +160,8 @@ class SuperSlacker(ProcessStateMonitor):
         self.proxy = kwargs.get('proxy', None)
         self.icon = kwargs.get('icon')
         self.username = kwargs.get('username')
+        self.eventname = kwargs.get('eventname')
+        self.interval = float(kwargs.get('interval'))/60
         events = kwargs.get('events', None)
         self.process_state_events = [
             'PROCESS_STATE_{}'.format(e.strip().upper())

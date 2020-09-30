@@ -1,3 +1,7 @@
+0.6 (2020-09-30)
+----------------
+Added additional parameters to pass into superlance (eventname and interval)
+
 0.5 (2020-09-29)
 ----------------
 Added proxy support 
