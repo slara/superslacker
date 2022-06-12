@@ -1,3 +1,7 @@
+0.7 (2022-06-12)
+----------------
+Added blacklist functionality
+
 0.6 (2020-09-30)
 ----------------
 Added additional parameters to pass into superlance (eventname and interval)

@@ -28,7 +28,7 @@
 # events=PROCESS_STATE,TICK_60
 
 """
-Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-e events] [-p proxy] [--eventname TICK_x] [--interval interval]
+Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-e events] [-p proxy] [--eventname TICK_x] [--interval interval] [--blacklist apps ]
 
 Options:
   -h, --help            show this help message and exit
@@ -49,11 +49,14 @@ Options:
   --proxy=eventname
                         How often to check process states (TICK_5 or TICK_60). Default TICK_60
 
-  -interval=interval
+  --interval=interval
                         How often to flush message queue (in seconds). Default 60
 
   -e EVENTS, --events=EVENTS
-                        Supervisor process state event(s)
+                        Supervisor process state event(s)A
+
+  --blacklist=apps
+                        application not to monitor
 """
 
 import copy
@@ -101,13 +104,20 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option("-t", "--token", help="Slack Token")
         parser.add_option("-c", "--channel", help="Slack Channel")
         parser.add_option("-w", "--webhook", help="Slack WebHook URL")
-        parser.add_option("-i", "--icon", default=':sos:', help="Slack emoji to be used as icon")
-        parser.add_option("-u", "--username", default='superslacker', help="Slack username")
+        parser.add_option("-i", "--icon", default=':sos:',
+                          help="Slack emoji to be used as icon")
+        parser.add_option("-u", "--username",
+                          default='superslacker', help="Slack username")
         parser.add_option("-n", "--hostname", help="System Hostname")
         parser.add_option("-p", "--proxy", help="Proxy server")
-        parser.add_option("--eventname", help="TICK_5 or TICK_60. Default TICK_60. How often to add messages into queue")
-        parser.add_option("--interval", help="How often to flush message queue. Default 60sec")
-        parser.add_option("-e", "--events", help="Supervisor event(s). Can be any, some or all of {} as comma separated values".format(cls.SUPERVISOR_EVENTS))
+        parser.add_option(
+            "--eventname", help="TICK_5 or TICK_60. Default TICK_60. How often to add messages into queue")
+        parser.add_option(
+            "--interval", help="How often to flush message queue. Default 60sec")
+        parser.add_option(
+            "-e", "--events", help="Supervisor event(s). Can be any, some or all of {} as comma separated values".format(cls.SUPERVISOR_EVENTS))
+        parser.add_option(
+            "--blacklist", help="List of applications we are not interested in.")
 
         return parser
 
@@ -162,11 +172,14 @@ class SuperSlacker(ProcessStateMonitor):
         self.username = kwargs.get('username')
         self.eventname = kwargs.get('eventname')
         self.interval = float(kwargs.get('interval'))/60
-        events = kwargs.get('events', None)
         self.process_state_events = [
             'PROCESS_STATE_{}'.format(e.strip().upper())
             for e in kwargs.get('events', None).split(",")
             if e in self.SUPERVISOR_EVENTS
+        ]
+        self.process_blacklist = [
+            '{}'.format(e.strip().lower())
+            for e in kwargs.get('blacklist', None).split(",")
         ]
 
     def get_process_state_change_msg(self, headers, payload):
@@ -177,27 +190,30 @@ class SuperSlacker(ProcessStateMonitor):
 
     def send_batch_notification(self):
         for msg in self.batchmsgs:
-            hostname, processname, from_state, eventname = msg.rsplit(';')
-            payload = {
-                'channel': self.channel,
-                'username': self.username,
-                'icon_emoji': self.icon,
-                'blocks': [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": "{4} *{0}* @{1}: *{2}* from {3}".format(processname.split(":")[0],hostname,self.EVENTS_SHORT_NAMES[eventname],from_state, self.EVENTS_SLACK_COLORS[eventname])
+            if msg.processname in self.blacklist:
+                return
+            else:
+                hostname, processname, from_state, eventname = msg.rsplit(';')
+                payload = {
+                    'channel': self.channel,
+                    'username': self.username,
+                    'icon_emoji': self.icon,
+                    'blocks': [
+                        {
+                            "type": "section",
+                            "text": {
+                                "type": "mrkdwn",
+                                "text": "{4} *{0}* @{1}: *{2}* from {3}".format(processname.split(":")[0], hostname, self.EVENTS_SHORT_NAMES[eventname], from_state, self.EVENTS_SLACK_COLORS[eventname])
+                            }
                         }
-                    }
-                ]
-            }
-            if self.webhook:
-                webhook = WebhookClient(url=self.webhook,proxy=self.proxy)
-                webhook.send_dict(body=payload)
-            elif self.token:
-                slack = WebClient(token=self.token,proxy=self.proxy)
-                slack.chat_postMessage(**payload)
+                    ]
+                }
+                if self.webhook:
+                    webhook = WebhookClient(url=self.webhook, proxy=self.proxy)
+                    webhook.send_dict(body=payload)
+                elif self.token:
+                    slack = WebClient(token=self.token, proxy=self.proxy)
+                    slack.chat_postMessage(**payload)
 
 
 def main():
@@ -207,7 +223,8 @@ def main():
 
 def fatalslack():
     superslacker = SuperSlacker.create_from_cmd_line()
-    superslacker.write_stderr('fatalslack is deprecated. Please use superslack instead\n')
+    superslacker.write_stderr(
+        'fatalslack is deprecated. Please use superslack instead\n')
     superslacker.run()
 
 
