@@ -13,7 +13,7 @@ pip install superslacker
 ## Command-Line Syntax
 
 ```bash
-$ superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events]
+$ superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events] [-p proxy] [--eventname eventname] [--interval interval] [--blacklist apps] [--whitelist apps]
 ```
 
 ### Options
@@ -39,6 +39,10 @@ Post a message to Slack using Slack Incoming WebHook. In order to be able to sen
 The Supervisor Process State event(s) to listen for. It can be any, one of, or all of
 STARTING, RUNNING, BACKOFF, STOPPING, EXITED, STOPPED, UNKNOWN.
 
+```-p PROXY, --proxy=PROXY```
+
+If you server with supervisord is behind proxy
+
 ```-i ICON_EMOJI, --icon=ICON_EMOJI```
 
 To customize the Slackmoji to be used as icon. Defaults to `:sos:`.
@@ -46,6 +50,25 @@ To customize the Slackmoji to be used as icon. Defaults to `:sos:`.
 ```-u USERNAME, --username=USERNAME```
 
 To customize the Slack username. Defaults to `superslacker`.
+
+```-eventname=EVENTNAME```
+
+How often to check changes. TICK_5 or TICK_60. Default TICK_60.
+
+```--interval=INTERVAL```
+
+How often to flush message queue. Default 60 sec.
+
+```--blacklist=apps```
+
+List of applications to ignore
+
+```--whitelist=apps```
+
+List of applications always to monitor with all events
+
+
+
 
 ## Notes
 

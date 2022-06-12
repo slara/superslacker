@@ -29,7 +29,7 @@ from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 try:
-    README = open(os.path.join(here, 'README.txt')).read()
+    README = open(os.path.join(here, 'README.md')).read()
 except (IOError, OSError):
     README = ''
 try:
@@ -38,7 +38,7 @@ except (IOError, OSError):
     CHANGES = ''
 
 setup(name='superslacker',
-      version='0.4',
+      version='0.8',
       license='BSD-derived (http://www.repoze.org/LICENSE.txt)',
       description='superslacker plugin for supervisord',
       long_description=README + '\n\n' + CHANGES,
@@ -70,13 +70,11 @@ setup(name='superslacker',
       zip_safe=False,
       install_requires=[
           'superlance',
-          'supervisor',
-          'slacker'
+          'slackclient'
       ],
       tests_require=[
-          'supervisor',
           'superlance',
-          'slacker',
+          'slackclient',
           'mock'
       ],
       test_suite='superslacker.tests',
