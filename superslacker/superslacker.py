@@ -53,15 +53,16 @@ Options:
                         How often to flush message queue (in seconds). Default 60
 
   -e EVENTS, --events=EVENTS
-                        Supervisor process state event(s)A
+                        Supervisor process state event(s)
 
-  --blacklist=apps
-                        application not to monitor
+  -b apps --blacklist=apps
+                        List of applications to ignore
 """
 
 import copy
 import os
 import sys
+import json
 
 from slack import WebClient, WebhookClient
 from superlance.process_state_monitor import ProcessStateMonitor
@@ -117,7 +118,7 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option(
             "-e", "--events", help="Supervisor event(s). Can be any, some or all of {} as comma separated values".format(cls.SUPERVISOR_EVENTS))
         parser.add_option(
-            "--blacklist", help="List of applications we are not interested in.")
+            "-b", "--blacklist", help="Comma-separated list of application for which not to send notifiactions")
 
         return parser
 
@@ -170,17 +171,20 @@ class SuperSlacker(ProcessStateMonitor):
         self.proxy = kwargs.get('proxy', None)
         self.icon = kwargs.get('icon')
         self.username = kwargs.get('username')
-        self.eventname = kwargs.get('eventname')
-        self.interval = float(kwargs.get('interval'))/60
+        self.eventname = kwargs.get('eventname', "TICK_60")
+        self.interval = float(kwargs.get('interval', 60))/60
         self.process_state_events = [
             'PROCESS_STATE_{}'.format(e.strip().upper())
             for e in kwargs.get('events', None).split(",")
             if e in self.SUPERVISOR_EVENTS
         ]
-        self.process_blacklist = [
-            '{}'.format(e.strip().lower())
-            for e in kwargs.get('blacklist', None).split(",")
-        ]
+        if kwargs.get('blacklist'):
+            self.process_blacklist = [
+                '{}'.format(e.strip())
+                for e in kwargs.get('blacklist', None).split(",")
+            ]
+        else:
+            self.process_blacklist = []
 
     def get_process_state_change_msg(self, headers, payload):
         pheaders, pdata = childutils.eventdata(payload + '\n')
@@ -190,10 +194,8 @@ class SuperSlacker(ProcessStateMonitor):
 
     def send_batch_notification(self):
         for msg in self.batchmsgs:
-            if msg.processname in self.blacklist:
-                return
-            else:
-                hostname, processname, from_state, eventname = msg.rsplit(';')
+            hostname, processname, from_state, eventname = msg.rsplit(';')
+            if processname.split(":")[0] not in self.process_blacklist:
                 payload = {
                     'channel': self.channel,
                     'username': self.username,
