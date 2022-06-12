@@ -59,6 +59,15 @@ How often to check changes. TICK_5 or TICK_60. Default TICK_60.
 
 How often to flush message queue. Default 60 sec.
 
+```--blacklist=apps```
+
+List of applications to ignore
+
+```--whitelist=apps```
+
+List of applications always to monitor with all events
+
+
 
 
 ## Notes
