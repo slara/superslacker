@@ -28,7 +28,7 @@
 # events=PROCESS_STATE,TICK_60
 
 """
-Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-e events] [-p proxy] [--eventname TICK_x] [--interval interval] [--blacklist apps ]
+Usage: superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-e events] [-p proxy] [--eventname TICK_x] [--interval interval] [--blacklist apps ] [--whitelist apps]
 
 Options:
   -h, --help            show this help message and exit
@@ -44,24 +44,24 @@ Options:
                         Slack username
   -n HOSTNAME, --hostname=HOSTNAME
                         System Hostname
-  -p PROXY, --proxy=PROXY
-                        Proxy Server
-  --proxy=eventname
+  --eventname=eventname
                         How often to check process states (TICK_5 or TICK_60). Default TICK_60
-
   --interval=interval
                         How often to flush message queue (in seconds). Default 60
-
   -e EVENTS, --events=EVENTS
                         Supervisor process state event(s)
-
-  -b apps --blacklist=apps
-                        List of applications to ignore
+  --blacklist=apps
+                        List of applications to ignore                      
+  --whitelist=apps
+                        List of applications always monitoring (all events)
+  -p PROXY, --proxy=PROXY
+                        Proxy Server
 """
 
 import copy
 import os
 import sys
+import json
 
 from slack import WebClient, WebhookClient
 from superlance.process_state_monitor import ProcessStateMonitor
@@ -117,7 +117,9 @@ class SuperSlacker(ProcessStateMonitor):
         parser.add_option(
             "-e", "--events", help="Supervisor event(s). Can be any, some or all of {} as comma separated values".format(cls.SUPERVISOR_EVENTS))
         parser.add_option(
-            "-b", "--blacklist", help="Comma-separated list of application for which not to send notifiactions")
+            "--blacklist", help="Comma-separated list of application for which not to send notifiactions")
+        parser.add_option(
+            "--whitelist", help="Comma-separated list of application always to monitor")
 
         return parser
 
@@ -172,11 +174,18 @@ class SuperSlacker(ProcessStateMonitor):
         self.username = kwargs.get('username')
         self.eventname = kwargs.get('eventname', "TICK_60")
         self.interval = float(kwargs.get('interval', 60))/60
-        self.process_state_events = [
-            'PROCESS_STATE_{}'.format(e.strip().upper())
-            for e in kwargs.get('events', None).split(",")
-            if e in self.SUPERVISOR_EVENTS
-        ]
+        self.process_state_events = ['PROCESS_STATE_{}'.format(status)
+                                     for status in self.SUPERVISOR_EVENTS]
+
+        if kwargs.get('events'):
+            self.process_filter_events = [
+                'PROCESS_STATE_{}'.format(e.strip().upper())
+                for e in kwargs.get('events', None).split(",")
+                if e in self.SUPERVISOR_EVENTS
+            ]
+        else:
+            self.process_filter_events = self.process_state_events
+
         if kwargs.get('blacklist'):
             self.process_blacklist = [
                 '{}'.format(e.strip())
@@ -185,47 +194,63 @@ class SuperSlacker(ProcessStateMonitor):
         else:
             self.process_blacklist = []
 
+        if kwargs.get('whitelist'):
+            self.process_whitelist = [
+                '{}'.format(e.strip())
+                for e in kwargs.get('whitelist', None).split(",")
+            ]
+        else:
+            self.process_whitelist = []
+
     def get_process_state_change_msg(self, headers, payload):
         pheaders, pdata = childutils.eventdata(payload + '\n')
         return "{hostname};{groupname}:{processname};{from_state};{event}".format(
             hostname=self.hostname, event=headers['eventname'], **pheaders
         )
 
+    def send_slack_notification(self, processname, hostname, eventname, from_state):
+        payload = {
+            'channel': self.channel,
+            'username': self.username,
+            'icon_emoji': self.icon,
+            'blocks': [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "{4} *{0}* @{1}: *{2}* from {3}".format(processname,
+                                                                        hostname,
+                                                                        self.EVENTS_SHORT_NAMES[eventname],
+                                                                        from_state,
+                                                                        self.EVENTS_SLACK_COLORS[eventname])
+                    }
+                }
+            ]
+        }
+        if self.webhook:
+            webhook = WebhookClient(url=self.webhook, proxy=self.proxy)
+            webhook.send_dict(body=payload)
+        elif self.token:
+            slack = WebClient(token=self.token, proxy=self.proxy)
+            slack.chat_postMessage(**payload)
+
     def send_batch_notification(self):
         for msg in self.batchmsgs:
             hostname, processname, from_state, eventname = msg.rsplit(';')
-            if processname.split(":")[0] not in self.process_blacklist:
-                payload = {
-                    'channel': self.channel,
-                    'username': self.username,
-                    'icon_emoji': self.icon,
-                    'blocks': [
-                        {
-                            "type": "section",
-                            "text": {
-                                "type": "mrkdwn",
-                                "text": "{4} *{0}* @{1}: *{2}* from {3}".format(processname.split(":")[0], hostname, self.EVENTS_SHORT_NAMES[eventname], from_state, self.EVENTS_SLACK_COLORS[eventname])
-                            }
-                        }
-                    ]
-                }
-                if self.webhook:
-                    webhook = WebhookClient(url=self.webhook, proxy=self.proxy)
-                    webhook.send_dict(body=payload)
-                elif self.token:
-                    slack = WebClient(token=self.token, proxy=self.proxy)
-                    slack.chat_postMessage(**payload)
+            processname = processname.split(":")[0]
+            if processname in self.process_whitelist:
+                self.send_slack_notification(
+                    processname, hostname, eventname, from_state)
+            elif processname in self.process_blacklist:
+                return
+            else:
+                if eventname in self.process_filter_events:
+                    self.send_slack_notification(
+                        processname, hostname, eventname, from_state)
 
 
 def main():
     superslacker = SuperSlacker.create_from_cmd_line()
-    superslacker.run()
-
-
-def fatalslack():
-    superslacker = SuperSlacker.create_from_cmd_line()
-    superslacker.write_stderr(
-        'fatalslack is deprecated. Please use superslack instead\n')
     superslacker.run()
 
 
