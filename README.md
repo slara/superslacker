@@ -13,7 +13,7 @@ pip install superslacker
 ## Command-Line Syntax
 
 ```bash
-$ superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events] [-p proxy] [--eventname eventname] [--interval interval] [--blacklist apps]
+$ superslacker [-t token] [-c channel] [-n hostname] [-w webhook] [-a attachment] [-e events] [-p proxy] [--eventname eventname] [--interval interval] [--blacklist apps] [--whitelist apps]
 ```
 
 ### Options
