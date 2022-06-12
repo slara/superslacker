@@ -1,4 +1,5 @@
 0.8 (2022-06-12)
+----------------
 Added whitelist functionality
 
 0.7 (2022-06-12)
@@ -11,7 +12,7 @@ Added additional parameters to pass into superlance (eventname and interval)
 
 0.5 (2020-09-29)
 ----------------
-Added proxy support 
+Added proxy support
 Changed format of messages (compact)
 
 0.4 (2019-11-15)
@@ -32,10 +33,10 @@ Customize Slack username and icon. (Thanks to David Guillot)
 - refactor
 
 0.02 (2015-10-30)
-----------------
+-----------------
 - Copyright and Package fixes.
 
 
 0.01 (2015-10-30)
-----------------
+-----------------
 - Initial release
