@@ -61,11 +61,11 @@ How often to flush message queue. Default 60 sec.
 
 ```--blacklist=apps```
 
-List of applications to ignore
+List of applications to ignore (support keyword "ALL")
 
 ```--whitelist=apps```
 
-List of applications always to monitor with all events
+List of applications always to monitor with all events (support keyword "ALL". Take priority over blacklist)
 
 
 
