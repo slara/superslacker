@@ -45,7 +45,7 @@ Options:
   -n HOSTNAME, --hostname=HOSTNAME
                         System Hostname
   --eventname=eventname
-                        How often to check process states (TICK_5 or TICK_60). Default TICK_60
+                        How often to check process states (TICK_5 or TICK_60). Default TICK_5
   --interval=interval
                         How often to flush message queue (in seconds). Default 60
   -e EVENTS, --events=EVENTS
@@ -172,7 +172,7 @@ class SuperSlacker(ProcessStateMonitor):
         self.proxy = kwargs.get('proxy', None)
         self.icon = kwargs.get('icon')
         self.username = kwargs.get('username')
-        self.eventname = kwargs.get('eventname', "TICK_60")
+        self.eventname = kwargs.get('eventname', "TICK_5")
         self.interval = float(kwargs.get('interval', 60))/60
         self.process_state_events = ['PROCESS_STATE_{}'.format(status)
                                      for status in self.SUPERVISOR_EVENTS]
@@ -238,10 +238,10 @@ class SuperSlacker(ProcessStateMonitor):
         for msg in self.batchmsgs:
             hostname, processname, from_state, eventname = msg.rsplit(';')
             processname = processname.split(":")[0]
-            if processname in self.process_whitelist:
+            if processname in self.process_whitelist or "all".lower() in [x.lower() for x in self.process_whitelist]:
                 self.send_slack_notification(
                     processname, hostname, eventname, from_state)
-            elif processname in self.process_blacklist:
+            elif processname in self.process_blacklist or "all".lower() in [x.lower() for x in self.process_blacklist]::
                 return
             else:
                 if eventname in self.process_filter_events:
