@@ -241,7 +241,7 @@ class SuperSlacker(ProcessStateMonitor):
             if processname in self.process_whitelist or "all".lower() in [x.lower() for x in self.process_whitelist]:
                 self.send_slack_notification(
                     processname, hostname, eventname, from_state)
-            elif processname in self.process_blacklist or "all".lower() in [x.lower() for x in self.process_blacklist]::
+            elif processname in self.process_blacklist or "all".lower() in [x.lower() for x in self.process_blacklist]:
                 return
             else:
                 if eventname in self.process_filter_events:
