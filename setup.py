@@ -38,7 +38,7 @@ except (IOError, OSError):
     CHANGES = ''
 
 setup(name='superslacker',
-      version='0.9',
+      version='0.9.1',
       license='BSD-derived (http://www.repoze.org/LICENSE.txt)',
       description='superslacker plugin for supervisord',
       long_description=README + '\n\n' + CHANGES,
