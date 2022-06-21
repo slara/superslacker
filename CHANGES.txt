@@ -1,3 +1,7 @@
+0.8.1 (2022-06-21)
+------------------
+Fix default values for eventname and interval
+
 0.8 (2022-06-12)
 ----------------
 Added whitelist functionality
