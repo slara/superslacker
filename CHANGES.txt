@@ -1,4 +1,4 @@
-0.8.1 (2022-06-21)
+0.9.1 (2022-06-21)
 ------------------
 Fix default values for eventname and interval
 
